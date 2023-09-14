@@ -1,0 +1,13 @@
+# my git ignore for emacs config
+.cache
+.dap-breakpoints
+.lsp-session-v1
+.mc-lists.el
+auto-save-list
+backup
+bookmarks
+recentf
+snippets
+straight
+transient
+var
