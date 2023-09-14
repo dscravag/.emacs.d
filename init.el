@@ -8,7 +8,7 @@
 ;;; repo](https://github.com/lukpank/.emacs.d).
 
 
-;;; Bootstrap straight.el
+
 ;;; ---------------------
 
 (defvar bootstrap-version)
@@ -28,6 +28,26 @@
       straight-use-package-by-default t)
 (straight-use-package 'use-package)
 
+;;; [dsc] Key binding
+(when (eq system-type 'darwin)
+  ;; set keys for Apple keyboard, for emacs in OS X
+  ;;(setq mac-command-modifier 'super) ; make cmd key do Meta
+  (setq mac-option-modifier 'meta) ; make opt key do Meta
+  (setq mac-right-option-modifier 'none) ; keep for accents
+  (setq mac-control-modifier 'control) ; make Control key do Control
+  (setq mac-command-modifier 'super) ; make Command key do Super
+  (setq mac-right-command-modifier 'none) ; Keep for mac command stuffs
+  (setq mac-function-modifier 'hyper)  ; make Fn key do Hyper
+  )
+
+;;; [dsc] Backup files in backup directory
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
+  backup-by-copying t    ; Don't delink hardlinks
+  version-control t      ; Use version numbers on backups
+  delete-old-versions t  ; Automatically delete excess backups
+  kept-new-versions 20   ; how many of the newest versions to keep
+  kept-old-versions 5    ; and how many of the old
+  )
 
 ;;; Productivity
 ;;; ------------
@@ -221,6 +241,101 @@
 (use-package ivy-yasnippet
   :bind ("C-c y" . ivy-yasnippet))
 
+;;; [dsc] Org Mode
+;;; --------------
+
+(use-package org)
+
+;; Files
+(setq org-directory "~/Documents/org")
+(setq org-agenda-files (list "inbox.org" "agenda.org"
+                             "notes.org" "projects.org"))
+
+;; Capture
+(setq org-capture-templates
+      `(("i" "Inbox" entry  (file "inbox.org")
+        ,(concat "* TODO %?\n"
+                 "/Entered on/ %U"))
+        ("m" "Meeting" entry  (file+headline "agenda.org" "Future")
+        ,(concat "* %? :meeting:\n"
+                 "<%<%Y-%m-%d %a %H:00>>"))
+        ("n" "Note" entry  (file "notes.org")
+        ,(concat "* Note (%a)\n"
+                 "/Entered on/ %U\n" "\n" "%?"))
+        ("@" "Inbox [mu4e]" entry (file "inbox.org")
+        ,(concat "* TODO Reply to \"%a\" %?\n"
+                 "/Entered on/ %U"))))
+
+(defun org-capture-inbox ()
+     (interactive)
+     (call-interactively 'org-store-link)
+     (org-capture nil "i"))
+
+(defun org-capture-mail ()
+  (interactive)
+  (call-interactively 'org-store-link)
+  (org-capture nil "@"))
+
+;; Use full window for org-capture
+(add-hook 'org-capture-mode-hook 'delete-other-windows)
+
+;; Key bindings
+(define-key global-map            (kbd "C-c a") 'org-agenda)
+(define-key global-map            (kbd "C-c c") 'org-capture)
+(define-key global-map            (kbd "C-c i") 'org-capture-inbox)
+
+;; Only if you use mu4e
+;; (require 'mu4e)
+;; (define-key mu4e-headers-mode-map (kbd "C-c i") 'org-capture-mail)
+;; (define-key mu4e-view-mode-map    (kbd "C-c i") 'org-capture-mail)
+
+;; Refile
+(setq org-refile-use-outline-path 'file)
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-targets
+      '(("projects.org" :regexp . "\\(?:\\(?:Note\\|Task\\)s\\)")))
+
+;; TODO
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "NEXT(n)" "HOLD(h)" "|" "DONE(d)")))
+(defun log-todo-next-creation-date (&rest ignore)
+  "Log NEXT creation time in the property drawer under the key 'ACTIVATED'"
+  (when (and (string= (org-get-todo-state) "NEXT")
+             (not (org-entry-get nil "ACTIVATED")))
+    (org-entry-put nil "ACTIVATED" (format-time-string "[%Y-%m-%d]"))))
+(add-hook 'org-after-todo-state-change-hook #'log-todo-next-creation-date)
+
+;; Agenda
+(setq org-agenda-custom-commands
+      '(("g" "Get Things Done (GTD)"
+         ((agenda ""
+                  ((org-agenda-skip-function
+                    '(org-agenda-skip-entry-if 'deadline))
+                   (org-deadline-warning-days 0)))
+          (todo "NEXT"
+                ((org-agenda-skip-function
+                  '(org-agenda-skip-entry-if 'deadline))
+                 (org-agenda-prefix-format "  %i %-12:c [%e] ")
+                 (org-agenda-overriding-header "\nTasks\n")))
+          (agenda nil
+                  ((org-agenda-entry-types '(:deadline))
+                   (org-agenda-format-date "")
+                   (org-deadline-warning-days 7)
+                   (org-agenda-skip-function
+                    '(org-agenda-skip-entry-if 'notregexp "\\* NEXT"))
+                   (org-agenda-overriding-header "\nDeadlines")))
+          (tags-todo "inbox"
+                     ((org-agenda-prefix-format "  %?-12t% s")
+                      (org-agenda-overriding-header "\nInbox\n")))
+          (tags "CLOSED>=\"<today>\""
+                ((org-agenda-overriding-header "\nCompleted today\n")))))))
+
+
+;; Only if you use mu4e
+;; (require 'mu4e)
+;; (define-key mu4e-headers-mode-map (kbd "C-c i") 'org-capture-mail)
+;; (define-key mu4e-view-mode-map    (kbd "C-c i") 'org-capture-mail)
+
 
 ;;; Programming modes
 ;;; -----------------
@@ -232,8 +347,8 @@
 
 (use-package company
   :bind (:map prog-mode-map
-	 ("C-i" . company-indent-or-complete-common)
-	 ("C-M-i" . counsel-company))
+	      ("C-i" . company-indent-or-complete-common)
+	      ("C-M-i" . counsel-company))
   :hook (emacs-lisp-mode . company-mode))
 
 (use-package company-prescient
@@ -534,8 +649,12 @@
 (use-package faff-theme
   :defer)
 
-(setq my-dark-theme 'base16-espresso
-      my-light-theme 'base16-mexico-light)
+;; [dsc] adding solarized theme
+(use-package solarized-theme
+  :defer)
+
+(setq my-dark-theme 'solarized-dark
+      my-light-theme 'solarized-light)
 
 (defun my-select-theme (theme)
   (mapc #'disable-theme custom-enabled-themes)
@@ -564,4 +683,9 @@
 		       my-light-theme
 		     my-dark-theme)))
 
-(global-set-key (kbd "C-S-<f6>") #'my-toggle-theme)
+(my-select-theme 'dark)
+
+(global-set-key (kbd "C-x C-t") #'my-toggle-theme)
+
+;; [dsc] change font size
+(set-face-attribute 'default nil :height 180)
