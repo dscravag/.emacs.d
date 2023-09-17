@@ -7,6 +7,8 @@
 ;;; The newest version of this config is available from a [github
 ;;; repo](https://github.com/lukpank/.emacs.d).
 
+;; My default font size
+(defvar davidemacs/default-font-size 148)
 
 
 ;;; ---------------------
@@ -28,16 +30,17 @@
       straight-use-package-by-default t)
 (straight-use-package 'use-package)
 
+
 ;;; [dsc] Key binding
 (when (eq system-type 'darwin)
   ;; set keys for Apple keyboard, for emacs in OS X
   ;;(setq mac-command-modifier 'super) ; make cmd key do Meta
-  (setq mac-option-modifier 'meta) ; make opt key do Meta
+  (setq mac-option-modifier 'meta)	 ; make opt key do Meta
   (setq mac-right-option-modifier 'none) ; keep for accents
-  (setq mac-control-modifier 'control) ; make Control key do Control
-  (setq mac-command-modifier 'super) ; make Command key do Super
+  (setq mac-control-modifier 'control)	 ; make Control key do Control
+  (setq mac-command-modifier 'super)	 ; make Command key do Super
   (setq mac-right-command-modifier 'none) ; Keep for mac command stuffs
-  (setq mac-function-modifier 'hyper)  ; make Fn key do Hyper
+  (setq mac-function-modifier 'hyper)	  ; make Fn key do Hyper
   )
 
 ;;; [dsc] Backup files in backup directory
@@ -48,6 +51,21 @@
   kept-new-versions 20   ; how many of the newest versions to keep
   kept-old-versions 5    ; and how many of the old
   )
+
+
+;;; [dsc] line number
+(column-number-mode)
+(global-display-line-numbers-mode t)
+
+;; Disable line numbers for some modes
+(dolist (mode '(org-mode-hook
+                term-mode-hook
+		shell-mode-hook
+		eshell-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 ;;; Productivity
 ;;; ------------
@@ -245,6 +263,50 @@
 ;;; --------------
 
 (use-package org)
+
+
+(defun efs/org-mode-setup ()
+  (org-indent-mode)
+  (variable-pitch-mode 1)
+  (visual-line-mode 1))
+
+;; Set faces for heading levels
+  (dolist (face '((org-level-1 . 1.2)
+                  (org-level-2 . 1.1)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
+
+
+;; (efs/org-font-setup))
+
+(use-package org-bullets
+  :after org
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("◉" "☯" "○" "☯" "✸" "☯" "✿" "☯" "✜" "☯" "◆" "☯" "▶"))
+  (org-ellipsis "⤵")
+  )
+
+
+
+(set-face-attribute 'default nil :font "Fira Code Retina" :height davidemacs/default-font-size)
+
+
+
 
 ;; Files
 (setq org-directory "~/Documents/org")
@@ -688,4 +750,4 @@
 (global-set-key (kbd "C-x C-t") #'my-toggle-theme)
 
 ;; [dsc] change font size
-(set-face-attribute 'default nil :height 180)
+;;(set-face-attribute 'default nil :height 180)
