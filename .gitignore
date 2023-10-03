@@ -1,4 +1,5 @@
 # my git ignore for emacs config
+eln-cache
 .cache
 .dap-breakpoints
 .lsp-session-v1

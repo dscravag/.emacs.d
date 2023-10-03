@@ -30,6 +30,11 @@
       straight-use-package-by-default t)
 (straight-use-package 'use-package)
 
+(use-package exec-path-from-shell
+  :init)
+
+(when (memq window-system '(mac ns x))
+  (exec-path-from-shell-initialize))
 
 ;;; [dsc] Key binding
 (when (eq system-type 'darwin)
@@ -44,7 +49,7 @@
   )
 
 ;;; [dsc] Backup files in backup directory
-(setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
+(setq backup-directory-alist '(("." . "~/.config/emacs/backup"))
   backup-by-copying t    ; Don't delink hardlinks
   version-control t      ; Use version numbers on backups
   delete-old-versions t  ; Automatically delete excess backups
@@ -71,7 +76,6 @@
 ;;; ------------
 
 ;;; ### Key discoverability ###
-
 (use-package which-key
   :init
   (setq which-key-idle-delay 2.0
@@ -586,7 +590,13 @@
 
 ;;; Requires: [company and lsp-mode],
 ;;; [pylsp](https://pypi.org/project/python-lsp-server/).
-
+(use-package virtualenvwrapper)
+(venv-initialize-interactive-shells) ;; if you want interactive shell support
+(venv-initialize-eshell) ;; if you want eshell support
+;; note that setting `venv-location` is not necessary if you
+;; use the default location (`~/.virtualenvs`), or if the
+;; the environment variable `WORKON_HOME` points to the right place
+(setq venv-location "~/.virtualenvs/")
 
 ;;; ### Rust ###
 
